@@ -26,7 +26,8 @@ from casadi.tools import *
 import pdb
 import sys
 import os
-rel_do_mpc_path = os.path.join('..','..')
+
+rel_do_mpc_path = os.path.join('..', '..')
 sys.path.append(rel_do_mpc_path)
 import do_mpc
 
@@ -39,7 +40,6 @@ def template_mpc(model, silence_solver=False):
     """
     mpc = do_mpc.controller.MPC(model)
 
-
     # Set settings of MPC:
     mpc.settings.n_horizon = 20
     mpc.settings.n_robust = 0
@@ -50,53 +50,42 @@ def template_mpc(model, silence_solver=False):
     mpc.settings.collocation_deg = 2
     mpc.settings.collocation_ni = 1
     mpc.settings.store_full_solution = True
-    
+
     if silence_solver:
         mpc.settings.supress_ipopt_output()
 
-
-    # mpc.scaling['_x', 'T_R'] = 100
-    # mpc.scaling['_x', 'T_K'] = 100
-    # mpc.scaling['_u', 'Q_dot'] = 2000
-    # mpc.scaling['_u', 'F'] = 100
-
-    mterm = (model.x['C_b'] - 0.6)**2
-    lterm = (model.x['C_b'] - 0.6)**2
+    mterm = (model.x['X_p'] - 1) ** 2
+    lterm = (model.x['Y_p'] - 1) ** 2
 
     mpc.set_objective(mterm=mterm, lterm=lterm)
 
-    mpc.set_rterm(F=0.1, Q_dot = 1e-3)
+    mpc.set_rterm(Delta=0.1, Acc=1e-3)
 
     # Set constraints:
-    mpc.bounds['lower', '_x', 'C_a'] = 0.1
-    mpc.bounds['lower', '_x', 'C_b'] = 0.1
-    mpc.bounds['lower', '_x', 'T_R'] = 50
-    mpc.bounds['lower', '_x', 'T_K'] = 50
-    mpc.bounds['lower', '_x', 'T_K'] = 50
-    mpc.bounds['lower', '_x', 'T_K'] = 50
+    mpc.bounds['lower', '_x', 'X_p'] = -5
+    mpc.bounds['lower', '_x', 'Y_b'] = -5
+    mpc.bounds['lower', '_x', 'Psi'] = -pi / 3
+    mpc.bounds['lower', '_x', 'V_x'] = -5
+    mpc.bounds['lower', '_x', 'V_y'] = -5
+    mpc.bounds['lower', '_x', 'W'] = -50
+
+    mpc.bounds['upper', '_x', 'X_p'] = 5
+    mpc.bounds['upper', '_x', 'Y_b'] = 5
+    mpc.bounds['upper', '_x', 'Psi'] = pi / 3
+    mpc.bounds['upper', '_x', 'V_x'] = 5
+    mpc.bounds['upper', '_x', 'V_y'] = 5
+    mpc.bounds['upper', '_x', 'W'] = 50
+
+    mpc.bounds['lower', '_u', 'Delta'] = -5
+    mpc.bounds['lower', '_u', 'Acc'] = -5
+
+    mpc.bounds['upper', '_u', 'Delta'] = 5
+    mpc.bounds['upper', '_u', 'ACC'] = 5
 
 
-    mpc.bounds['upper', '_x', 'C_a'] = 2
-    mpc.bounds['upper', '_x', 'C_b'] = 2
-    mpc.bounds['upper', '_x', 'T_K'] = 140
+    #mpc.set_nl_cons('T_R', model.x['T_R'], ub=140, soft_constraint=True, penalty_term_cons=1e2)
 
-    mpc.bounds['lower', '_u', 'F'] = 5
-    mpc.bounds['lower', '_u', 'Q_dot'] = -8500
-
-    mpc.bounds['upper', '_u', 'F'] = 100
-    mpc.bounds['upper', '_u', 'Q_dot'] = 0.0
-
-    # Instead of having a regular bound on T_R:
-    #mpc.bounds['upper', '_x', 'T_R'] = 140
-    # We can also have soft consraints as part of the set_nl_cons method:
-    mpc.set_nl_cons('T_R', model.x['T_R'], ub=140, soft_constraint=True, penalty_term_cons=1e2)
-
-
-    alpha_var = np.array([1., 1.05, 0.95])
-    beta_var = np.array([1., 1.1, 0.9])
-
-    mpc.set_uncertainty_values(alpha = alpha_var, beta = beta_var)
-
+    
     mpc.setup()
 
     return mpc
