@@ -44,34 +44,34 @@ def template_mpc(model, silence_solver=False):
     mpc.settings.n_horizon = 20
     mpc.settings.n_robust = 0
     mpc.settings.open_loop = 0
-    mpc.settings.t_step = 0.05
+    mpc.settings.t_step = 0.1
     mpc.settings.state_discretization = 'collocation'
     mpc.settings.collocation_type = 'radau'
-    mpc.settings.collocation_deg =  3
+    mpc.settings.collocation_deg = 2
     mpc.settings.collocation_ni = 1
     mpc.settings.store_full_solution = True
 
     if silence_solver:
         mpc.settings.supress_ipopt_output()
 
-    mterm = (model.x['X_p'] - 10) ** 2 +  (model.x['Y_p'] - 0) ** 2
+    mterm = (model.x['X_p'] - 1) ** 2
     lterm = (model.x['Y_p'] - 1) ** 2
 
-    mpc.set_objective(mterm=mterm, lterm=lterm*0)
+    mpc.set_objective(mterm=mterm, lterm=lterm)
 
-    mpc.set_rterm(Delta=1.0, Acc=1e-3)
+    mpc.set_rterm(Delta=0.1, Acc=1e-3)
 
     # Set constraints:
-    mpc.bounds['lower', '_x', 'X_p'] = -50
-    mpc.bounds['lower', '_x', 'Y_p'] = -50
-    mpc.bounds['lower', '_x', 'Psi'] = -pi / 2
-    mpc.bounds['lower', '_x', 'V_x'] = 0.01
+    mpc.bounds['lower', '_x', 'X_p'] = -5
+    mpc.bounds['lower', '_x', 'Y_b'] = -5
+    mpc.bounds['lower', '_x', 'Psi'] = -pi / 3
+    mpc.bounds['lower', '_x', 'V_x'] = -5
     mpc.bounds['lower', '_x', 'V_y'] = -5
     mpc.bounds['lower', '_x', 'W'] = -50
 
-    mpc.bounds['upper', '_x', 'X_p'] = 50
-    mpc.bounds['upper', '_x', 'Y_p'] = 50
-    mpc.bounds['upper', '_x', 'Psi'] = pi / 2
+    mpc.bounds['upper', '_x', 'X_p'] = 5
+    mpc.bounds['upper', '_x', 'Y_b'] = 5
+    mpc.bounds['upper', '_x', 'Psi'] = pi / 3
     mpc.bounds['upper', '_x', 'V_x'] = 5
     mpc.bounds['upper', '_x', 'V_y'] = 5
     mpc.bounds['upper', '_x', 'W'] = 50
@@ -80,7 +80,7 @@ def template_mpc(model, silence_solver=False):
     mpc.bounds['lower', '_u', 'Acc'] = -5
 
     mpc.bounds['upper', '_u', 'Delta'] = 5
-    mpc.bounds['upper', '_u', 'Acc'] = 5
+    mpc.bounds['upper', '_u', 'ACC'] = 5
 
 
     #mpc.set_nl_cons('T_R', model.x['T_R'], ub=140, soft_constraint=True, penalty_term_cons=1e2)

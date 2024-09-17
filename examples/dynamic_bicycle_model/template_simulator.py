@@ -43,7 +43,7 @@ def template_simulator(model):
         'integration_tool': 'cvodes',
         'abstol': 1e-10,
         'reltol': 1e-10,
-        't_step': 0.05
+        't_step': 0.1
     }
 
     simulator.set_param(**params_simulator)
