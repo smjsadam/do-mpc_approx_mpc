@@ -48,20 +48,20 @@ def template_model(symvar_type='SX'):
     lf = 0.3  # Distance from CoG to front wheel [m]
     lr = 0.3  # Distance from CoG to rear wheel [m]
     w = 0.15  # Width of the car [m]
-    D_f = 0.5  # Peak factor for front wheel between 0.5 and 1.5
-    D_r = 0.5  # Peak factor for rear wheel between 0.5 and 1.5
+    D_f = 1.5  # Peak factor for front wheel between 0.5 and 1.5
+    D_r = 1.5  # Peak factor for rear wheel between 0.5 and 1.5
     C_f = 1  # shape factor for front wheel between 1 and 2
     C_r = 1  # shape factor for rear wheel between 1 and 2
     B_f = 5  # stiffness factor for front wheel between 5 and 15
     B_r = 5  # stiffness factor for rear wheel between 5 and 15
     # E_f = 0.5  # curvature factor for front wheel between 0.5 and 1.0
     # E_r = 0.5  # curvature factor for rear wheel between 0.5 and 1.0
-
+    epsillion = 0
     I_z = (1 / 12) * m * ((lf + lr) ** 2 + w ** 2)  # Moment of inertia around z-axis [kg*m^2]
     c_1 = 0.5  # acceleration constant between 0.1 and 1
     c_2 = 0.1  # velocity related coefficient between 0.01 and 0.1
-    c_3 = 0.01  # coefficient related to velocity squared between 0.001 and 0.01
-    c_4 = 0.01  # constant force offset between  0.01 and 0.1
+    c_3 = 0  # coefficient related to velocity squared between 0.001 and 0.01
+    c_4 = 0  # constant force offset between  0.01 and 0.1
 
     # States struct (optimization variables):
     X_p = model.set_variable(var_type='_x', var_name='X_p', shape=(1, 1))
@@ -75,18 +75,17 @@ def template_model(symvar_type='SX'):
     Delta = model.set_variable(var_type='_u', var_name='Delta')
     Acc = model.set_variable(var_type='_u', var_name='Acc')
 
-
     # # Set expression. These can be used in the cost function, as non-linear constraints
     # # or just to monitor another output.
     Vel = model.set_expression(expr_name='Vel', expr=sqrt(V_x ** 2 + V_y ** 2))
-
+    import math
     # Expressions can also be formed without beeing explicitly added to the model.
     # The main difference is that they will not be monitored and can only be used within the current file.
-    alpha_f = atan((V_y + lf * W) / V_x) - Delta  # Front wheel slip angle
-    alpha_r = atan((V_y - lr * W) / V_x)  # Rear wheel slip angle
+    alpha_f = atan(V_y + lf * W / (V_x )) - Delta  # Front wheel slip angle
+    alpha_r = atan((V_y - lr * W) / (V_x ))  # Rear wheel slip angle
     F_f = D_f * sin(C_f * atan(B_f * alpha_f))  # Front wheel force
     F_r = D_r * sin(C_r * atan(B_r * alpha_r))  # Rear wheel force
-    F_x = (c_1 + c_2 * V_x) * Acc + c_3 * V_x ** 2 + c_4  # Force in x-direction
+    F_x = Acc  # (c_1 + c_2 * V_x) * Acc + c_3 * V_x ** 2 + c_4  # Force in x-direction
 
     # Differential equations
     model.set_rhs('X_p', V_x * cos(Psi) - V_y * sin(Psi))
@@ -94,7 +93,7 @@ def template_model(symvar_type='SX'):
     model.set_rhs('Psi', W)
     model.set_rhs('V_x', (1 / m) * (F_x - F_f * sin(Delta) + m * V_y * W))
     model.set_rhs('V_y', (1 / m) * (F_r + F_f * cos(Delta) - m * V_x * W))
-    model.set_rhs('W', (1 / I_z) * (F_f * lf * cos(Delta) - F_r * lr))
+    model.set_rhs('W', (1 / I_z) * (F_f * lf * cos(Delta) - F_r * lr) )
 
     # Build the model
     model.setup()
