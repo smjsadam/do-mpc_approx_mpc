@@ -42,7 +42,7 @@ from template_mpc import template_mpc
 from template_simulator import template_simulator
 
 """ User settings: """
-show_animation = False
+show_animation = True
 store_results = False
 
 
