@@ -85,7 +85,7 @@ def template_mpc(model, silence_solver=False):
 
     #mpc.set_nl_cons('T_R', model.x['T_R'], ub=140, soft_constraint=True, penalty_term_cons=1e2)
 
-    
+
     mpc.setup()
 
     return mpc
